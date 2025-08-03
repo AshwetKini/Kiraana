@@ -1,85 +1,52 @@
+// ─────────────────────────────────────────────────────────
+// file: app/(tabs)/_layout.tsx
+// ─────────────────────────────────────────────────────────
+import React from 'react';
 import { Tabs } from 'expo-router';
-import { LayoutDashboard, Users, Truck, Package, ChartBar as BarChart3 } from 'lucide-react-native';
+import { useColorScheme } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 
-export default function TabLayout() {
+export default function TabsLayout() {
+  const colorScheme = useColorScheme();
+
   return (
     <Tabs
       screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: 'white',
-          borderTopWidth: 1,
-          borderTopColor: '#E5E7EB',
-          paddingBottom: 8,
-          paddingTop: 8,
-          height: 65,
-        },
-        tabBarActiveTintColor: '#22C55E',
-        tabBarInactiveTintColor: '#6B7280',
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
-        },
+        tabBarActiveTintColor: colorScheme === 'dark' ? '#fff' : '#007AFF',
+        tabBarInactiveTintColor: '#aaa',
+        headerShown: true,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ size, color }) => (
-            <LayoutDashboard size={size} color={color} />
+          title: 'Home',
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome name="home" color={color} size={size} />
           ),
         }}
       />
-      <Tabs.Screen
-        name="customers"
-        options={{
-          title: 'Customers',
-          tabBarIcon: ({ size, color }) => <Users size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="suppliers"
-        options={{
-          title: 'Suppliers',
-          tabBarIcon: ({ size, color }) => <Truck size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="inventory"
-        options={{
-          title: 'Inventory',
-          tabBarIcon: ({ size, color }) => <Package size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="analytics"
-        options={{
-          title: 'Analytics',
-          tabBarIcon: ({ size, color }) => <BarChart3 size={size} color={color} />,
-        }}
-      />
 
-      // Add these tab screens to your existing tab layout
-<Tabs.Screen
-  name="sales"
-  options={{
-    title: 'Sales',
-    tabBarIcon: ({ color }) => (
-      <YourSalesIcon size={28} color={color} />
-    ),
-  }}
-/>
-<Tabs.Screen
-  name="purchases"
-  options={{
-    title: 'Purchases',
-    tabBarIcon: ({ color }) => (
-      <YourPurchasesIcon size={28} color={color} />
-    ),
-  }}
-/>
-
+      <Tabs.Screen
+        name="sales"
+        options={{
+          title: 'Sales',
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome name="shopping-cart" color={color} size={size} />
+          ),
+        }}
+      />
+      
+      {/* If you have an account screen: */}
+      {/* <Tabs.Screen
+        name="account"
+        options={{
+          title: 'Account',
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome name="user" color={color} size={size} />
+          ),
+        }}
+      /> */}
     </Tabs>
   );
 }

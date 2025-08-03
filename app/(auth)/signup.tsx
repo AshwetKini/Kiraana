@@ -28,17 +28,14 @@ export default function SignUpScreen() {
       Alert.alert('Error', 'Please enter a valid email address');
       return;
     }
-
     if (!normalizedEmail || !password) {
       Alert.alert('Error', 'Please fill all fields');
       return;
     }
-
     if (password !== confirmPassword) {
       Alert.alert('Error', 'Passwords do not match');
       return;
     }
-
     if (password.length < 6) {
       Alert.alert('Error', 'Password must be at least 6 characters');
       return;
@@ -46,26 +43,30 @@ export default function SignUpScreen() {
 
     setLoading(true);
     try {
-      // Call signUp once after validation
-      const { data, error } = await supabase.auth.signUp(
-        { email: normalizedEmail, password },
-        { emailRedirectTo: 'myapp://app/(auth)/login' }
-      );
-
-      // Log full response for debugging
-      console.log('Supabase signUp response data:', data);
-      console.error('Supabase signUp error:', error);
-
-      if (error) {
-        Alert.alert(
-          'Sign-Up Error',
-          `Code: ${error.status}\nMessage: ${error.message}`
-        );
+      // 1) Sign up
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+      });
+      console.error('SignUp error:', signUpError);
+      if (signUpError) {
+        Alert.alert('Sign-Up Error', signUpError.message);
         return;
       }
 
-      if (data.user) {
-        // Create a 1-day trial subscription
+      // 2) Immediately sign in
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      });
+      console.error('SignIn error:', signInError);
+      if (signInError) {
+        Alert.alert('Login Error', signInError.message);
+        return;
+      }
+
+      // 3) Create trial subscription
+      if (signInData.user) {
         const trialStart = new Date();
         const trialEnd = new Date();
         trialEnd.setDate(trialEnd.getDate() + 1);
@@ -73,24 +74,18 @@ export default function SignUpScreen() {
         const { error: subError } = await supabase
           .from('user_subscriptions')
           .insert({
-            user_id: data.user.id,
+            user_id: signInData.user.id,
             trial_start: trialStart.toISOString(),
             trial_end: trialEnd.toISOString(),
             is_active: true,
           });
-
-        if (subError) {
-          console.error('Subscription error:', subError);
-        }
-
-        Alert.alert(
-          'Success',
-          'Account created! Please verify your email and then set up your store.',
-          [{ text: 'OK', onPress: () => router.replace('/(auth)/store-setup') }]
-        );
+        if (subError) console.error('Subscription error:', subError);
       }
+
+      // 4) Navigate into app
+      router.replace('/(tabs)');
     } catch (err) {
-      console.error('Unexpected error during signUp:', err);
+      console.error('Unexpected error:', err);
       Alert.alert('Error', 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
@@ -164,7 +159,7 @@ export default function SignUpScreen() {
             disabled={loading}
           >
             <Text style={styles.buttonText}>
-              {loading ? 'Creating Account...' : 'Sign Up'}
+              {loading ? 'Processing...' : 'Sign Up & Log In'}
             </Text>
           </TouchableOpacity>
 
@@ -183,19 +178,8 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
   content: { flex: 1, justifyContent: 'center', padding: 24, minHeight: '100%' },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 8,
-    color: '#1F2937',
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#6B7280',
-    marginBottom: 40,
-  },
+  title: { fontSize: 32, fontWeight: 'bold', textAlign: 'center', marginBottom: 8, color: '#1F2937' },
+  subtitle: { fontSize: 16, textAlign: 'center', color: '#6B7280', marginBottom: 40 },
   form: { gap: 20 },
   inputContainer: {
     flexDirection: 'row',

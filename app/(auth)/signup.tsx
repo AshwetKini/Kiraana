@@ -21,10 +21,15 @@ export default function SignUpScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleSignUp = async () => {
-    console.log('Attempting signUp with email:', email);
-const { data, error } = await supabase.auth.signUp({ email, password });
+    // Normalize & validate email
+    const normalizedEmail = email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(normalizedEmail)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
 
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       Alert.alert('Error', 'Please fill all fields');
       return;
     }
@@ -41,10 +46,10 @@ const { data, error } = await supabase.auth.signUp({ email, password });
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+      const { data, error } = await supabase.auth.signUp(
+        { email: normalizedEmail, password },
+        { emailRedirectTo: 'myapp://app/(auth)/login' }
+      );
 
       if (error) {
         Alert.alert('Error', error.message);
@@ -52,10 +57,10 @@ const { data, error } = await supabase.auth.signUp({ email, password });
       }
 
       if (data.user) {
-        // Create trial subscription
+        // Create a 1-day trial subscription
         const trialStart = new Date();
         const trialEnd = new Date();
-        trialEnd.setDate(trialEnd.getDate() + 1); // 1 day trial
+        trialEnd.setDate(trialEnd.getDate() + 1);
 
         await supabase.from('user_subscriptions').insert({
           user_id: data.user.id,
@@ -66,16 +71,15 @@ const { data, error } = await supabase.auth.signUp({ email, password });
 
         Alert.alert(
           'Success',
-          'Account created successfully! Please set up your store.',
-          [{ text: 'OK', onPress: () => router.replace('/store-setup') }]
+          'Account created! Please verify your email and then set up your store.',
+          [{ text: 'OK', onPress: () => router.replace('/(auth)/store-setup') }]
         );
       }
-    } catch (error) {
+    } catch (err) {
       Alert.alert('Error', 'Something went wrong');
     } finally {
       setLoading(false);
     }
-    
   };
 
   return (
@@ -151,7 +155,8 @@ const { data, error } = await supabase.auth.signUp({ email, password });
 
           <TouchableOpacity onPress={() => router.push('/login')}>
             <Text style={styles.linkText}>
-              Already have an account? <Text style={styles.linkHighlight}>Login</Text>
+              Already have an account?{' '}
+              <Text style={styles.linkHighlight}>Login</Text>
             </Text>
           </TouchableOpacity>
         </View>
@@ -161,32 +166,11 @@ const { data, error } = await supabase.auth.signUp({ email, password });
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 24,
-    minHeight: '100%',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 8,
-    color: '#1F2937',
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#6B7280',
-    marginBottom: 40,
-  },
-  form: {
-    gap: 20,
-  },
+  container: { flex: 1, backgroundColor: '#F9FAFB' },
+  content: { flex: 1, justifyContent: 'center', padding: 24, minHeight: '100%' },
+  title: { fontSize: 32, fontWeight: 'bold', textAlign: 'center', marginBottom: 8, color: '#1F2937' },
+  subtitle: { fontSize: 16, textAlign: 'center', color: '#6B7280', marginBottom: 40 },
+  form: { gap: 20 },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -197,18 +181,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    paddingVertical: 16,
-    color: '#1F2937',
-  },
-  eyeIcon: {
-    padding: 8,
-  },
+  inputIcon: { marginRight: 12 },
+  input: { flex: 1, fontSize: 16, paddingVertical: 16, color: '#1F2937' },
+  eyeIcon: { padding: 8 },
   button: {
     backgroundColor: '#22C55E',
     paddingVertical: 16,
@@ -216,22 +191,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
   },
-  buttonDisabled: {
-    backgroundColor: '#9CA3AF',
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  linkText: {
-    textAlign: 'center',
-    marginTop: 24,
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  linkHighlight: {
-    color: '#22C55E',
-    fontWeight: '600',
-  },
+  buttonDisabled: { backgroundColor: '#9CA3AF' },
+  buttonText: { color: 'white', fontSize: 16, fontWeight: '600' },
+  linkText: { textAlign: 'center', marginTop: 24, fontSize: 14, color: '#6B7280' },
+  linkHighlight: { color: '#22C55E', fontWeight: '600' },
 });

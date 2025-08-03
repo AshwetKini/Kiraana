@@ -1,0 +1,199 @@
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
+
+interface InvoiceData {
+  storeInfo: {
+    name: string;
+    address: string;
+    phone: string;
+  };
+  customerInfo: {
+    name: string;
+    phone: string;
+    address?: string;
+  };
+  saleDate: string;
+  items: {
+    name: string;
+    quantity: number;
+    unit_price: number;
+    total_price: number;
+  }[];
+  totalAmount: number;
+  paidAmount: number;
+  dueAmount: number;
+}
+
+export const generateInvoice = async (invoiceData: InvoiceData) => {
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          margin: 0;
+          padding: 20px;
+          color: #333;
+        }
+        .header {
+          text-align: center;
+          border-bottom: 2px solid #22C55E;
+          padding-bottom: 20px;
+          margin-bottom: 30px;
+        }
+        .store-name {
+          font-size: 28px;
+          font-weight: bold;
+          color: #22C55E;
+          margin-bottom: 10px;
+        }
+        .store-info {
+          color: #666;
+          line-height: 1.5;
+        }
+        .invoice-details {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 30px;
+        }
+        .customer-info, .invoice-info {
+          flex: 1;
+        }
+        .section-title {
+          font-weight: bold;
+          margin-bottom: 10px;
+          color: #22C55E;
+        }
+        .items-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 30px;
+        }
+        .items-table th,
+        .items-table td {
+          border: 1px solid #ddd;
+          padding: 12px;
+          text-align: left;
+        }
+        .items-table th {
+          background-color: #22C55E;
+          color: white;
+          font-weight: bold;
+        }
+        .items-table tr:nth-child(even) {
+          background-color: #f9f9f9;
+        }
+        .totals {
+          text-align: right;
+          margin-top: 20px;
+        }
+        .total-row {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 10px;
+          padding: 5px 0;
+        }
+        .grand-total {
+          font-weight: bold;
+          font-size: 18px;
+          border-top: 2px solid #22C55E;
+          padding-top: 10px;
+        }
+        .footer {
+          margin-top: 50px;
+          text-align: center;
+          color: #666;
+          font-size: 14px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="store-name">${invoiceData.storeInfo.name}</div>
+        <div class="store-info">
+          ${invoiceData.storeInfo.address}<br>
+          Phone: ${invoiceData.storeInfo.phone}
+        </div>
+      </div>
+
+      <div class="invoice-details">
+        <div class="customer-info">
+          <div class="section-title">Bill To:</div>
+          <div>${invoiceData.customerInfo.name}</div>
+          <div>Phone: ${invoiceData.customerInfo.phone}</div>
+          ${invoiceData.customerInfo.address ? `<div>${invoiceData.customerInfo.address}</div>` : ''}
+        </div>
+        <div class="invoice-info">
+          <div class="section-title">Invoice Details:</div>
+          <div>Date: ${new Date(invoiceData.saleDate).toLocaleDateString()}</div>
+          <div>Invoice #: ${Date.now()}</div>
+        </div>
+      </div>
+
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Rate</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${invoiceData.items.map(item => `
+            <tr>
+              <td>${item.name}</td>
+              <td>${item.quantity}</td>
+              <td>₹${item.unit_price.toFixed(2)}</td>
+              <td>₹${item.total_price.toFixed(2)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+
+      <div class="totals">
+        <div class="total-row">
+          <span>Subtotal:</span>
+          <span>₹${invoiceData.totalAmount.toFixed(2)}</span>
+        </div>
+        <div class="total-row grand-total">
+          <span>Total:</span>
+          <span>₹${invoiceData.totalAmount.toFixed(2)}</span>
+        </div>
+        <div class="total-row">
+          <span>Paid:</span>
+          <span>₹${invoiceData.paidAmount.toFixed(2)}</span>
+        </div>
+        ${invoiceData.dueAmount > 0 ? `
+        <div class="total-row" style="color: #EF4444;">
+          <span>Due:</span>
+          <span>₹${invoiceData.dueAmount.toFixed(2)}</span>
+        </div>
+        ` : ''}
+      </div>
+
+      <div class="footer">
+        <p>Thank you for your business!</p>
+        <p>Generated by Kiraana Store Management</p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  try {
+    const { uri } = await Print.printToFileAsync({ html: htmlContent });
+    
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(uri);
+    }
+    
+    return uri;
+  } catch (error) {
+    console.error('Error generating invoice:', error);
+    throw error;
+  }
+};

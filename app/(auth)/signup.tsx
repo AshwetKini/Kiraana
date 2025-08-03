@@ -46,13 +46,21 @@ export default function SignUpScreen() {
 
     setLoading(true);
     try {
+      // Call signUp once after validation
       const { data, error } = await supabase.auth.signUp(
         { email: normalizedEmail, password },
         { emailRedirectTo: 'myapp://app/(auth)/login' }
       );
 
+      // Log full response for debugging
+      console.log('Supabase signUp response data:', data);
+      console.error('Supabase signUp error:', error);
+
       if (error) {
-        Alert.alert('Error', error.message);
+        Alert.alert(
+          'Sign-Up Error',
+          `Code: ${error.status}\nMessage: ${error.message}`
+        );
         return;
       }
 
@@ -62,12 +70,18 @@ export default function SignUpScreen() {
         const trialEnd = new Date();
         trialEnd.setDate(trialEnd.getDate() + 1);
 
-        await supabase.from('user_subscriptions').insert({
-          user_id: data.user.id,
-          trial_start: trialStart.toISOString(),
-          trial_end: trialEnd.toISOString(),
-          is_active: true,
-        });
+        const { error: subError } = await supabase
+          .from('user_subscriptions')
+          .insert({
+            user_id: data.user.id,
+            trial_start: trialStart.toISOString(),
+            trial_end: trialEnd.toISOString(),
+            is_active: true,
+          });
+
+        if (subError) {
+          console.error('Subscription error:', subError);
+        }
 
         Alert.alert(
           'Success',
@@ -76,7 +90,8 @@ export default function SignUpScreen() {
         );
       }
     } catch (err) {
-      Alert.alert('Error', 'Something went wrong');
+      console.error('Unexpected error during signUp:', err);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -168,8 +183,19 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
   content: { flex: 1, justifyContent: 'center', padding: 24, minHeight: '100%' },
-  title: { fontSize: 32, fontWeight: 'bold', textAlign: 'center', marginBottom: 8, color: '#1F2937' },
-  subtitle: { fontSize: 16, textAlign: 'center', color: '#6B7280', marginBottom: 40 },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 8,
+    color: '#1F2937',
+  },
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#6B7280',
+    marginBottom: 40,
+  },
   form: { gap: 20 },
   inputContainer: {
     flexDirection: 'row',

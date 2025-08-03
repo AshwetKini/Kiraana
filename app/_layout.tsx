@@ -1,6 +1,4 @@
 
-// app/layout.tsx
-import 'react-native-url-polyfill/auto';
 import { useEffect, useState } from 'react';
 import { Slot } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';

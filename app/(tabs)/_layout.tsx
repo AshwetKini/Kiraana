@@ -59,6 +59,27 @@ export default function TabLayout() {
           tabBarIcon: ({ size, color }) => <BarChart3 size={size} color={color} />,
         }}
       />
+
+      // Add these tab screens to your existing tab layout
+<Tabs.Screen
+  name="sales"
+  options={{
+    title: 'Sales',
+    tabBarIcon: ({ color }) => (
+      <YourSalesIcon size={28} color={color} />
+    ),
+  }}
+/>
+<Tabs.Screen
+  name="purchases"
+  options={{
+    title: 'Purchases',
+    tabBarIcon: ({ color }) => (
+      <YourPurchasesIcon size={28} color={color} />
+    ),
+  }}
+/>
+
     </Tabs>
   );
 }

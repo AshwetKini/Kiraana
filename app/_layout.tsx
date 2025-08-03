@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
+import 'react-native-url-polyfill/auto';
 
 export default function RootLayout() {
   useFrameworkReady();

@@ -21,6 +21,9 @@ export default function SignUpScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleSignUp = async () => {
+    console.log('Attempting signUp with email:', email);
+const { data, error } = await supabase.auth.signUp({ email, password });
+
     if (!email || !password) {
       Alert.alert('Error', 'Please fill all fields');
       return;
@@ -72,6 +75,7 @@ export default function SignUpScreen() {
     } finally {
       setLoading(false);
     }
+    
   };
 
   return (
